@@ -1,1 +1,55 @@
+version: '3.8'
 
+services:
+  # 1. MongoDB Database container running with replicaset mode (Acid Transaction verification)
+  mongodb:
+    image: mongo:7.0
+    container_name: mallpulse_db
+    ports:
+      - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+
+  # Helper container to auto-initiate replicaset and seed the initial tenant files
+  mongo-init:
+    image: mongo:7.0
+    depends_on:
+      - mongodb
+    restart: "no"
+    entrypoint: [ "bash", "-c", "sleep 3 && mongosh --host mongodb:27017 --eval 'rs.initiate()' && sleep 2 && echo Ready." ]
+
+  # 2. FastMCP Tool Bridge service over HTTP streamable transport
+  mcp-server:
+    build:
+      context: ./backend
+      dockerfile: src/mcp_server/Dockerfile
+    image: mallpulse-mcp-server:local
+    container_name: mallpulse_mcp
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=mallpulse
+    depends_on:
+      - mongodb
+
+  # 3. Core API Orchestrator logic
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: mallpulse-backend:local
+    container_name: mallpulse_api
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=mallpulse
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - mongodb
+      - mcp-server
+
+volumes:
+  mongo_data:
