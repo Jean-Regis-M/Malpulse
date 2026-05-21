@@ -1,1 +1,23 @@
+name: MallPulse CD Cloud Deployment
 
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-to-gcp:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Build and Push Containers via Cloud Build trigger
+      run: |
+        gcloud builds submit --config infrastructure/cloudbuild.yaml --project ${{ secrets.GCP_PROJECT_ID }} .
