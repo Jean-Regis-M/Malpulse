@@ -1,1 +1,18 @@
+[project]
+name = "mallpulse-backend"
+version = "1.0.0"
+description = "FastAPI backend with Google GenAI SDK and Motor MongoDB driver for MallPulse"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.22.0",
+    "motor>=3.3.0",
+    "google-genai>=1.2.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "mcp[cli]>=0.1.0",
+]
 
+[tool.uv]
+frozen = true
